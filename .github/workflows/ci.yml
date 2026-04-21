@@ -13,3 +13,14 @@ jobs:
     uses: brefwiz/shared-ci-workflows/.github/workflows/rust.yml@main
     with:
       run-coverage: true
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check docs (mirrors docs.rs feature set)
+        run: >
+          RUSTDOCFLAGS="-D warnings"
+          cargo doc --no-deps --no-default-features
+          --features "telemetry,database,ratelimit-memory,dotenv,validation,cursor,testing"

@@ -149,7 +149,7 @@ pub mod openapi {
 
     pub use crate::generate_openapi_binary;
 
-    /// utoipa [`Modify`] plugin that registers a `bearerAuth` HTTP Bearer security scheme.
+    /// utoipa [`utoipa::Modify`] plugin that registers a `bearerAuth` HTTP Bearer security scheme.
     pub struct BearerAuthAddon;
 
     impl utoipa::Modify for BearerAuthAddon {

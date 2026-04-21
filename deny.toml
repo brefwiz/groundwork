@@ -10,6 +10,12 @@ ignore = [
     # the postgres feature so the mysql (and rsa) code paths are never compiled
     # or linked. No actionable fix until sqlx drops the mysql dep or patches rsa.
     "RUSTSEC-2023-0071",
+    # rand unsound aliased-mut-ref (RUSTSEC-2026-0097) pulled in transitively
+    # by sqlx-postgres 0.8.x. Fix requires rand >= 0.9.3 which sqlx 0.8.x has
+    # not yet released. Conditions for UB are extremely narrow (custom logger +
+    # trace logging + ThreadRng reseeding). Review when sqlx 0.8.x ships fix.
+    # review-by: 2026-07-20
+    "RUSTSEC-2026-0097",
 ]
 
 [licenses]
