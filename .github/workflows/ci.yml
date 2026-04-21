@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [main]
 
+permissions: {}
+
 jobs:
   ci:
     uses: brefwiz/shared-ci-workflows/.github/workflows/rust.yml@main
