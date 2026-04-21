@@ -1,6 +1,6 @@
 [package]
 name = "socle"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 authors = ["Gregoire Salingue"]
 description = "Opinionated axum service bootstrap: telemetry, database, rate limiting, and shutdown in one builder"
@@ -10,6 +10,12 @@ readme = "README.md"
 keywords = ["axum", "tower", "bootstrap", "http", "telemetry"]
 categories = ["web-programming::http-server", "asynchronous"]
 rust-version = "1.85"
+
+[package.metadata.docs.rs]
+# utoipa-swagger-ui downloads assets at build time — blocked by docs.rs sandbox.
+# Build docs without the openapi feature to avoid that network dependency.
+features = ["telemetry", "database", "ratelimit-memory", "dotenv", "validation", "cursor", "testing"]
+no-default-features = true
 
 [features]
 default = ["telemetry", "database", "ratelimit-memory", "openapi", "dotenv"]

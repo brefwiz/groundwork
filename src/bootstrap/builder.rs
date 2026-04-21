@@ -284,7 +284,7 @@ impl ServiceBootstrap {
     /// The callback receives the service name and must return `Ok(())` on
     /// success or an [`Error`] that aborts startup.
     ///
-    /// Implies [`with_telemetry`] — no need to call both.
+    /// Implies [`ServiceBootstrap::with_telemetry`] — no need to call both.
     ///
     /// Prefer [`with_telemetry_provider`] for new code; it also handles
     /// shutdown (span/metric flush) automatically.
@@ -307,7 +307,7 @@ impl ServiceBootstrap {
     /// runs after the HTTP server stops (with a 30-second timeout).
     ///
     /// Takes priority over [`with_telemetry_init`] and
-    /// [`with_telemetry`] when all are called. Implies [`with_telemetry`].
+    /// [`ServiceBootstrap::with_telemetry`] when all are called. Implies [`ServiceBootstrap::with_telemetry`].
     ///
     /// Use this to wire in `otel-bootstrap` or any other OTel SDK from a
     /// wrapper crate:
@@ -344,7 +344,7 @@ impl ServiceBootstrap {
     ///
     /// Use this when the pool is constructed externally — for example by
     /// `sqlx-switchboard`'s `PoolConfig` — so that `serve()` skips its own
-    /// pool construction. Takes precedence over [`with_database`] if both are
+    /// pool construction. Takes precedence over [`ServiceBootstrap::with_database`] if both are
     /// called.
     #[cfg(feature = "database")]
     pub fn with_db_pool(mut self, pool: sqlx::PgPool) -> Self {

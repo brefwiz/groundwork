@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-04-21
+
+### Fixed
+- docs.rs builds now succeed: excluded the `openapi` feature from `[package.metadata.docs.rs]` to avoid `utoipa-swagger-ui`'s network-dependent build script (blocked in the docs.rs sandbox).
+- Resolved broken intra-doc links (`with_telemetry`, `with_database`, `Modify`) that rustdoc flagged as unresolved.
+
+### Changed
+- Added a `docs` CI job that runs `cargo doc --no-deps -D warnings` with the same feature set as docs.rs, preventing future doc regressions.
+
 ## [0.1.1] — 2026-04-21
 
 ### Changed
