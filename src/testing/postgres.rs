@@ -3,6 +3,23 @@ use testcontainers::ContainerAsync;
 use testcontainers_modules::postgres::Postgres;
 
 /// A running Postgres Docker container. The container is stopped and removed when this struct is dropped.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "testing-postgres")]
+/// # mod example {
+/// use socle::testing::postgres::EphemeralPostgres;
+///
+/// #[tokio::test]
+/// async fn with_real_database() {
+///     let pg = EphemeralPostgres::start().await;
+///     let pool = pg.pool().await;
+///     let (n,): (i64,) = sqlx::query_as("SELECT 1").fetch_one(&pool).await.unwrap();
+///     assert_eq!(n, 1);
+/// }
+/// # }
+/// ```
 pub struct EphemeralPostgres {
     _container: ContainerAsync<Postgres>,
     connection_url: String,

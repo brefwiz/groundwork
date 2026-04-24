@@ -62,6 +62,31 @@ impl Middleware for RequestIdMiddleware {
 }
 
 /// Entry point: returns a [`ClientBuilder`] with sensible defaults.
+///
+/// The resulting [`Client`] automatically propagates W3C `traceparent` /
+/// `tracestate` headers and the in-flight `x-request-id` on every outgoing
+/// request.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "http-client")]
+/// # mod example {
+/// use std::time::Duration;
+/// use socle::http_client;
+///
+/// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+/// let client = http_client::builder()
+///     .timeout(Duration::from_secs(10))
+///     .user_agent("my-service/1.0")
+///     .build()?;
+///
+/// let resp = client.get("https://example.com/api").send().await?;
+/// println!("{}", resp.status());
+/// # Ok(())
+/// # }
+/// # }
+/// ```
 pub fn builder() -> ClientBuilder {
     ClientBuilder {
         inner: reqwest::ClientBuilder::new(),
@@ -220,9 +245,9 @@ mod tests {
     async fn traceparent_injected_with_propagator() {
         use opentelemetry::trace::{TraceContextExt as _, Tracer as _, TracerProvider as _};
         use opentelemetry_sdk::propagation::TraceContextPropagator;
-        use opentelemetry_sdk::trace::TracerProvider;
+        use opentelemetry_sdk::trace::SdkTracerProvider;
 
-        let provider = TracerProvider::builder().build();
+        let provider = SdkTracerProvider::builder().build();
         let tracer = provider.tracer("test");
         opentelemetry::global::set_text_map_propagator(TraceContextPropagator::new());
 

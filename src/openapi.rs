@@ -1,4 +1,24 @@
 //! OpenAPI 3.0.3 helpers for `axum` + `utoipa` + `progenitor` consumers.
+//!
+//! # Examples
+//!
+//! ```rust,no_run
+//! # #[cfg(feature = "openapi")]
+//! # mod example {
+//! use socle::openapi::{BearerAuthAddon, merge_health_paths, to_3_0_pretty_json};
+//! use utoipa::OpenApi as _;
+//!
+//! #[derive(utoipa::OpenApi)]
+//! #[openapi(modifiers(&BearerAuthAddon))]
+//! struct ApiDoc;
+//!
+//! fn export_spec() -> String {
+//!     let mut doc = ApiDoc::openapi();
+//!     merge_health_paths(&mut doc, "/health");
+//!     to_3_0_pretty_json(&doc).expect("serialisation failed")
+//! }
+//! # }
+//! ```
 
 use utoipa::openapi::OpenApi;
 

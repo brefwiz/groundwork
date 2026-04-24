@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-04-23
+
+### Added
+
+- `EphemeralPostgres` — spins up a throwaway Postgres container for integration tests and exposes `connection_url()`.
+- `TestApp` / `TestAppBuilder` — ephemeral axum test-server harness; builds a live server from a `Router` and returns a `TestClient` bound to it.
+- `SpanRecord` / `CaptureExporter` / `init_capture_tracing()` — in-process OpenTelemetry span-capture helpers for asserting trace behaviour in tests.
+- `MetricsLayer` / `MetricsService` — Tower middleware that records RED metrics (request count, error count, latency histogram) into a Prometheus registry.
+- `counter()` — convenience constructor for a pre-registered `Counter<u64>`.
+- `socle::http_client` module — trace-propagating `reqwest` client builder (`builder()`, `ClientBuilder`, `Client`) that injects W3C trace-context headers on every outgoing request.
+- `socle::openapi` module — OpenAPI 3.0.3 helpers: `merge_health_paths`, `rewrite_nullable_for_progenitor`, `to_3_0_pretty_json`, and `BearerAuthAddon`.
+
+### Changed
+
+- `http_client` implementation aligned with the service-kit reference implementation.
+
 ## [1.1.0] — 2026-04-23
 
 ### Added
