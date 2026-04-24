@@ -76,8 +76,57 @@ pub type HandlerResponse<T> = Result<
 pub type HandlerListResponse<T> =
     Result<axum::Json<api_bones::ApiResponse<api_bones::PaginatedResponse<T>>>, HandlerError>;
 
-/// Convenience return type for handlers that return `201 Created` with a JSON body.
-pub type CreatedResult<T> = Result<(axum::http::StatusCode, axum::Json<T>), HandlerError>;
+/// Return type for handlers that create a resource and return it with a 201 status.
+pub type CreatedResponse<T> = Result<
+    (
+        axum::http::StatusCode,
+        axum::Json<api_bones::ApiResponse<T>>,
+    ),
+    HandlerError,
+>;
+
+/// Return type for read/update handlers that carry an ETag response header.
+pub type EtaggedHandlerResponse<T> = Result<
+    (
+        api_bones::etag::ETag,
+        axum::http::StatusCode,
+        axum::Json<api_bones::ApiResponse<T>>,
+    ),
+    HandlerError,
+>;
+
+/// Build the success value for a [`CreatedResponse`] handler (201 Created).
+pub fn created<T>(
+    value: T,
+) -> (
+    axum::http::StatusCode,
+    axum::Json<api_bones::ApiResponse<T>>,
+) {
+    (
+        axum::http::StatusCode::CREATED,
+        axum::Json(api_bones::ApiResponse::builder(value).build()),
+    )
+}
+
+/// Build the success value for a [`HandlerResponse`] handler (200 OK).
+pub fn ok<T>(
+    value: T,
+) -> (
+    axum::http::StatusCode,
+    axum::Json<api_bones::ApiResponse<T>>,
+) {
+    (
+        axum::http::StatusCode::OK,
+        axum::Json(api_bones::ApiResponse::builder(value).build()),
+    )
+}
+
+/// Build the success value for a [`HandlerListResponse`] handler.
+pub fn listed<T>(
+    page: api_bones::PaginatedResponse<T>,
+) -> axum::Json<api_bones::ApiResponse<api_bones::PaginatedResponse<T>>> {
+    axum::Json(api_bones::ApiResponse::builder(page).build())
+}
 
 /// Build a Problem+JSON 500 response from a panic payload. Used in catch-panic layer.
 pub(crate) fn panic_handler(err: Box<dyn std::any::Any + Send + 'static>) -> Response {
@@ -144,5 +193,31 @@ mod tests {
         let payload: Box<dyn std::any::Any + Send + 'static> = Box::new(42u32);
         let resp = panic_handler(payload);
         assert_eq!(resp.status(), 500);
+    }
+
+    #[test]
+    fn created_builds_201_with_envelope() {
+        let (status, body) = created("x");
+        assert_eq!(status, axum::http::StatusCode::CREATED);
+        let json = serde_json::to_value(body.0).unwrap();
+        assert_eq!(json["data"], "x");
+    }
+
+    #[test]
+    fn ok_builds_200_with_envelope() {
+        let (status, body) = ok(42u32);
+        assert_eq!(status, axum::http::StatusCode::OK);
+        let json = serde_json::to_value(body.0).unwrap();
+        assert_eq!(json["data"], 42);
+    }
+
+    #[test]
+    fn listed_wraps_paginated_response() {
+        use api_bones::{PaginatedResponse, pagination::PaginationParams};
+        let page: PaginatedResponse<u32> =
+            PaginatedResponse::new(vec![1, 2], 2, &PaginationParams::default());
+        let body = listed(page);
+        let json = serde_json::to_value(body.0).unwrap();
+        assert_eq!(json["data"]["items"], serde_json::json!([1, 2]));
     }
 }
