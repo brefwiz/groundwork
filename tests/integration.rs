@@ -135,3 +135,18 @@ async fn capture_exporter_drain_empties_buffer() {
     assert!(drained.iter().any(|s| s.name == "drain_op"));
     assert!(exporter.spans().is_empty());
 }
+
+#[tokio::test]
+async fn test_app_builder_serves_and_shuts_down() {
+    use axum::http::StatusCode;
+    use socle::testing::{TestApp, TestClient};
+
+    let router = Router::new().route("/ping", get(|| async { StatusCode::OK }));
+    let app = TestApp::builder().router(router).build().await;
+
+    let client: TestClient = app.client();
+    let resp = client.get("/ping").await;
+    assert_eq!(resp.status(), 200);
+
+    app.shutdown().await;
+}

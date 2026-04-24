@@ -6,6 +6,12 @@
 pub use test_client::TestClient;
 
 #[cfg(feature = "testing")]
+pub mod app;
+
+#[cfg(feature = "testing")]
+pub use app::{TestApp, TestAppBuilder};
+
+#[cfg(feature = "testing")]
 pub mod trace;
 
 #[cfg(feature = "testing")]
