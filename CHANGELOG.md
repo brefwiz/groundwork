@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-04-23
+
+### Added
+
+- `created<T>(value)` — builds `(StatusCode::CREATED, Json(ApiResponse::builder(value).build()))` for `CreatedResponse` handlers.
+- `ok<T>(value)` — builds `(StatusCode::OK, Json(ApiResponse::builder(value).build()))` for `HandlerResponse` handlers.
+- `listed<T>(page)` — builds `Json(ApiResponse::builder(page).build())` for `HandlerListResponse` handlers.
+- `CreatedResponse<T>` — return type alias for handlers that create a resource and return it with a 201 status.
+- `EtaggedHandlerResponse<T>` — return type alias for handlers that carry an ETag response header alongside the platform envelope.
+
+### Removed
+
+- `CreatedResult<T>` — pre-envelope bare `Json<T>` alias. Migrate to `CreatedResponse<T>` + `created()`.
+
 ## [1.0.0] — 2026-04-21
 
 ### Added
