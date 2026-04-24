@@ -92,4 +92,3 @@ pub(crate) fn merge_health_paths(
 
     api
 }
-
