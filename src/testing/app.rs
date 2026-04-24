@@ -11,6 +11,24 @@ use tokio::task::JoinHandle;
 use super::TestClient;
 
 /// A running test server.  Drop or call [`TestApp::shutdown`] when done.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "testing")]
+/// # mod example {
+/// use axum::{Router, routing::get};
+/// use socle::testing::TestApp;
+///
+/// #[tokio::test]
+/// async fn health_check() {
+///     let router = Router::new().route("/health", get(|| async { "ok" }));
+///     let app = TestApp::builder().router(router).build().await;
+///     let status = app.client().get("/health").send().await.unwrap().status();
+///     assert_eq!(status, 200);
+/// }
+/// # }
+/// ```
 pub struct TestApp {
     /// The address the server is listening on.
     pub addr: SocketAddr,
