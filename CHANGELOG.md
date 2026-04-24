@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `http_client::ClientBuilder::with(middleware)` — chainable extension point that appends a caller-supplied `reqwest_middleware::Middleware` to the stack after the built-in trace and request-id middleware. Multiple calls compose in call order.
+
 ## [1.2.1] — 2026-04-24
 
 ### Changed
