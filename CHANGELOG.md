@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [2.5.0] — 2026-04-25
 
 ### Added
 
@@ -8,6 +8,8 @@
 - `OrgIsolationLayer` — Tower middleware that short-circuits with `401 Unauthorized` when `OrganizationContext` is absent from request extensions.
 - `OrgContextSource` — enum recording which mechanism resolved the org context (`PrincipalClaim` or `Header`).
 - `OrgPolicy` trait + `AncestryOrgPolicy` — policy trait for org-scoped access control, with a default ancestry-based implementation.
+- `CreatedAtResponse<T>` + `created_at(location, value)` helper — returns `201 Created` with a `Location` header alongside the JSON body, mirroring `ok` / `created` / `listed` ergonomics.
+- `AuditLayer` — Tower middleware that captures request/response audit events to a pluggable `AuditSink`, with built-in sinks for tracing and in-memory collection.
 
 ## [2.4.0] — 2026-04-24
 
