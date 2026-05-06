@@ -8,9 +8,9 @@ use http_body_util::BodyExt;
 use tower::ServiceExt;
 
 use api_bones::audit::Principal;
-use api_bones::org_context::OrganizationContext;
 use api_bones::org_id::OrgId;
 use api_bones::request_id::RequestId;
+use socle::org_context::OrganizationContext;
 
 use socle::org_isolation::{OrgContextExtractor, OrgContextSource, OrgIsolationLayer};
 
