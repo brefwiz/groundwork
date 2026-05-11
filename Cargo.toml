@@ -83,7 +83,7 @@ opentelemetry = { version = "0.31", optional = true }
 async-trait = { version = "0.1", optional = true }
 http = { version = "1", optional = true }
 opentelemetry_sdk = { version = "0.31", default-features = false, features = ["metrics"], optional = true }
-opentelemetry-prometheus = { version = "0.31", optional = true }
+opentelemetry-prometheus = { version = "0.32", optional = true }
 prometheus = { version = "0.14", default-features = false, optional = true }
 
 validator = { version = "0.20", features = ["derive"], optional = true }
