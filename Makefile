@@ -2,7 +2,7 @@
 #
 # Mirrors the CI suite so contributors can reproduce CI failures locally.
 
-.PHONY: help fmt fmt-check clippy test build clean \
+.PHONY: help fmt fmt-check clippy test build clean lockfile \
         ci ci-format ci-lint ci-test ci-audit ci-coverage ci-deny ci-package
 
 help:
@@ -15,6 +15,7 @@ help:
 	@echo "  test           Run tests"
 	@echo "  build          Build the crate"
 	@echo "  clean          Clean build artifacts"
+	@echo "  lockfile       Regenerate Cargo.lock"
 	@echo ""
 	@echo "CI mirrors (reproduce CI failures locally):"
 	@echo "  ci             Full CI suite"
@@ -47,6 +48,9 @@ build:
 
 clean:
 	cargo clean
+
+lockfile:
+	cargo generate-lockfile
 
 # ============================================================================
 # CI suite targets (mirrors .gitea/workflows/ci.yml)
