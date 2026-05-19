@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.4.0] — 2026-05-19
+
+### Changed
+
+- **Bump `api-bones` to `"6"`** (from `"=5.0.0"`). Drops the exact-version pin — `socle` does not use `FilterEntry.operator` so the 6.0 breaking rename is a no-op here. Consumers gain access to the new `connect` feature (ADR-0096) by enabling it in their own `Cargo.toml`.
+
 ## [3.3.0] — 2026-05-06
 
 ### Changed
