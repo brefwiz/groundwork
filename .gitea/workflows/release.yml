@@ -23,7 +23,7 @@ env:
 jobs:
   canonical-check:
     name: Canonical Check (ADR-0086)
-    runs-on: brefwiz
+    runs-on: brefwiz-light
     container:
       image: harbor.brefwiz.com/brefwiz/ci:latest
       options: --user root
@@ -103,7 +103,7 @@ jobs:
   security-audit:
     name: Security Audit
     needs: [validate-version]
-    runs-on: brefwiz
+    runs-on: brefwiz-light
     container:
       image: harbor.brefwiz.com/brefwiz/ci:latest
       options: --user root

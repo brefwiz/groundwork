@@ -117,7 +117,7 @@ jobs:
   # ==========================================================================
   deny:
     name: Dependency License Audit
-    runs-on: brefwiz
+    runs-on: brefwiz-light
     container:
       image: harbor.brefwiz.com/brefwiz/ci:latest
       options: --user root
