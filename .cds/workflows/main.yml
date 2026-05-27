@@ -1,0 +1,286 @@
+# Migrated from .gitea/workflows/ per ADR platform/0123 Phase 2.
+name: socle-ci
+
+vars: [brefwiz-secrets, brefwiz-vars]
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+
+  canonical-check:
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-light
+      memory: "1536"
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+      RUSTC_WRAPPER: "sccache"
+      SCCACHE_REDIS: ${{ vars.brefwiz-vars.SCCACHE_REDIS }}
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - id: checkout
+        uses: actions/checkout
+      - id: canonical-check
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/canonical-check@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+
+  lint:
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-light
+      memory: "1536"
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+      RUSTC_WRAPPER: "sccache"
+      SCCACHE_REDIS: ${{ vars.brefwiz-vars.SCCACHE_REDIS }}
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - id: checkout
+        uses: actions/checkout
+      - id: fmt
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/fmt@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+      - id: clippy
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/clippy@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+
+  audit:
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-light
+      memory: "1536"
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+      RUSTC_WRAPPER: "sccache"
+      SCCACHE_REDIS: ${{ vars.brefwiz-vars.SCCACHE_REDIS }}
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - id: checkout
+        uses: actions/checkout
+      - id: audit
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/audit@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+
+  deny:
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-light
+      memory: "1536"
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+      RUSTC_WRAPPER: "sccache"
+      SCCACHE_REDIS: ${{ vars.brefwiz-vars.SCCACHE_REDIS }}
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - id: checkout
+        uses: actions/checkout
+      - id: deny
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/deny@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+
+  coverage:
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-local
+      memory: "12288"
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+      RUSTC_WRAPPER: "sccache"
+      SCCACHE_REDIS: ${{ vars.brefwiz-vars.SCCACHE_REDIS }}
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - id: checkout
+        uses: actions/checkout
+      - id: coverage
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/coverage@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+
+  lib-crate-publish-gate:
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-local
+      memory: "12288"
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+      RUSTC_WRAPPER: "sccache"
+      SCCACHE_REDIS: ${{ vars.brefwiz-vars.SCCACHE_REDIS }}
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - id: checkout
+        uses: actions/checkout
+      - id: lib-crate-publish-gate
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/lib-crate-publish-gate@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+
+  auto-tag:
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-local
+      memory: "12288"
+    needs: [canonical-check, lint, audit, deny, coverage, lib-crate-publish-gate]
+    outputs:
+      tag:
+        value: ${{ steps.auto-tag.outputs.tag }}
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+      RUSTC_WRAPPER: "sccache"
+      SCCACHE_REDIS: ${{ vars.brefwiz-vars.SCCACHE_REDIS }}
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - id: checkout
+        uses: actions/checkout
+        with:
+          fetch-depth: "0"
+      - id: auto-tag
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/auto-tag@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+          git-user-name: "cds-bot"
+          git-user-email: "ci@brefwiz.com"
+
+  cargo-publish:
+    if: ${{ jobs.auto-tag.outputs.tag != '' }}
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-local
+      memory: "12288"
+    needs: [auto-tag]
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+      RUSTC_WRAPPER: "sccache"
+      SCCACHE_REDIS: ${{ vars.brefwiz-vars.SCCACHE_REDIS }}
+      CARGO_INCREMENTAL: "0"
+      GITEA_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GITEA_HOST: ${{ vars.brefwiz-vars.GIT_HOST }}
+    steps:
+      - id: checkout
+        uses: actions/checkout
+      - id: cargo-publish
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/cargo-publish-registry@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+          registry: "brefwiz"
+
+  gitea-release:
+    if: ${{ jobs.auto-tag.outputs.tag != '' }}
+    runs-on:
+      model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
+      region: brefwiz-light
+      memory: "1536"
+    needs: [auto-tag, cargo-publish]
+    env:
+      CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
+      HARBOR_USER: ${{ vars.brefwiz-secrets.HARBOR_USER }}
+      HARBOR_TOKEN: ${{ vars.brefwiz-secrets.HARBOR_TOKEN }}
+      REGISTRY_USER: ${{ vars.brefwiz-secrets.REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ vars.brefwiz-secrets.REGISTRY_TOKEN }}
+      PACKAGE_READER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_READER_TOKEN }}
+      PACKAGE_PUBLISHER_TOKEN: ${{ vars.brefwiz-secrets.PACKAGE_PUBLISHER_TOKEN }}
+      GH_PACKAGES_READ_TOKEN: ${{ vars.brefwiz-secrets.GH_PACKAGES_READ_TOKEN }}
+      CI_LOGS_TOKEN: ${{ vars.brefwiz-secrets.CI_LOGS_TOKEN }}
+      HARBOR_REGISTRY: ${{ vars.brefwiz-vars.HARBOR_REGISTRY }}
+    steps:
+      - id: checkout
+        uses: actions/checkout
+      - id: gitea-release-create
+        uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/gitea-release-create@main
+        with:
+          checkout: "false"
+          gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+          tag: ${{ jobs.auto-tag.outputs.tag }}
+          repo: brefwiz/socle
+          token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
+          release-notes-extra: |
+            ### Artifacts published
+            - Rust crate `socle` v${{ jobs.auto-tag.outputs.tag }} (brefwiz Cargo registry)
