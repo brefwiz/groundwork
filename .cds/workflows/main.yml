@@ -11,9 +11,9 @@ on:
 jobs:
 
   canonical-check:
+    region: brefwiz-light
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-light
       memory: "1536"
     env:
       CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
@@ -39,9 +39,9 @@ jobs:
           gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
 
   lint:
+    region: brefwiz-light
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-light
       memory: "1536"
     env:
       CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
@@ -72,9 +72,9 @@ jobs:
           gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
 
   audit:
+    region: brefwiz-light
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-light
       memory: "1536"
     env:
       CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
@@ -100,9 +100,9 @@ jobs:
           gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
 
   deny:
+    region: brefwiz-light
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-light
       memory: "1536"
     env:
       CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
@@ -128,9 +128,9 @@ jobs:
           gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
 
   coverage:
+    region: brefwiz-local
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-local
       memory: "12288"
     env:
       CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
@@ -156,9 +156,9 @@ jobs:
           gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
 
   lib-crate-publish-gate:
+    region: brefwiz-local
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-local
       memory: "12288"
     env:
       CARGO_REGISTRIES_BREFWIZ_TOKEN: ${{ vars.brefwiz-secrets.CARGO_REGISTRIES_BREFWIZ_TOKEN }}
@@ -184,9 +184,9 @@ jobs:
           gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
 
   auto-tag:
+    region: brefwiz-local
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-local
       memory: "12288"
     needs: [canonical-check, lint, audit, deny, coverage, lib-crate-publish-gate]
     outputs:
@@ -221,9 +221,9 @@ jobs:
 
   cargo-publish:
     if: ${{ jobs.auto-tag.outputs.tag != '' }}
+    region: brefwiz-local
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-local
       memory: "12288"
     needs: [auto-tag]
     env:
@@ -254,9 +254,9 @@ jobs:
 
   gitea-release:
     if: ${{ jobs.auto-tag.outputs.tag != '' }}
+    region: brefwiz-light
     runs-on:
       model: BREFWIZ/brefwiz/brefwiz/infra/brefwiz-ci@main
-      region: brefwiz-light
       memory: "1536"
     needs: [auto-tag, cargo-publish]
     env:
