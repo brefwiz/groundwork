@@ -67,9 +67,9 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-bones"
-version = "6.1.0"
+version = "6.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85581b5e0a217e68ffd387300a2b3b05e82e80c2ad455244b7e9e21fb9e47b38"
+checksum = "d8c68b1c0487e9041f22149f14aa6c340eb39dde95855df643b0aaf83183bff9"
 dependencies = [
  "axum",
  "base64",
