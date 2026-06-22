@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0] — 2026-06-22
+
+### Changed
+
+- **BREAKING — sqlx 0.8 → 0.9.** The bootstrap exposes `sqlx::PgPool` in its public API (`with_db_pool`, `ctx.db()`), so this is a major bump: consumers must move to sqlx 0.9. Cargo feature `runtime-tokio-rustls` split into `runtime-tokio` + `tls-rustls-ring`. No socle code changes beyond the feature rename (socle holds/passes the pool; it runs no queries).
+- **Consolidated open dependabot bumps:** opentelemetry / opentelemetry_sdk / opentelemetry-prometheus 0.31 → 0.32, api-bones 6.1 → 6.5, async-nats 0.47 → 0.49, plus serde_json, http, uuid, chrono, reqwest patch bumps.
+
+### CI
+
+- Upload-all-logs catchall on all jobs; region + memory tiers propagated to `.cds/workflows`; light-pool job retargeting; `actions/checkout` 6 → 7.
+
 ## [3.4.0] — 2026-05-19
 
 ### Changed

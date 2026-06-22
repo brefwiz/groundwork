@@ -202,8 +202,7 @@ fn too_many_requests(limit: u32, retry_after_secs: u64) -> Response {
     use std::time::{SystemTime, UNIX_EPOCH};
     let reset = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs() + retry_after_secs)
-        .unwrap_or(retry_after_secs);
+        .map_or(retry_after_secs, |d| d.as_secs() + retry_after_secs);
     let info = api_bones::ratelimit::RateLimitInfo::new(limit.into(), 0, reset)
         .retry_after(retry_after_secs);
     let body = serde_json::json!({
