@@ -61,6 +61,9 @@ jobs:
   # ==========================================================================
   # clippy
   # ==========================================================================
+      - if: ${{ always() && (failure() || cancelled()) }}
+        uses: ./.ci-workflows/.gitea/actions/upload-all-logs
+
   clippy:
     name: Lint
     runs-on: brefwiz
@@ -88,6 +91,9 @@ jobs:
   # ==========================================================================
   # audit
   # ==========================================================================
+      - if: ${{ always() && (failure() || cancelled()) }}
+        uses: ./.ci-workflows/.gitea/actions/upload-all-logs
+
   audit:
     name: Security Audit
     runs-on: brefwiz
@@ -115,9 +121,12 @@ jobs:
   # ==========================================================================
   # deny
   # ==========================================================================
+      - if: ${{ always() && (failure() || cancelled()) }}
+        uses: ./.ci-workflows/.gitea/actions/upload-all-logs
+
   deny:
     name: Dependency License Audit
-    runs-on: brefwiz
+    runs-on: brefwiz-light
     container:
       image: harbor.brefwiz.com/brefwiz/ci:latest
       options: --user root
@@ -143,6 +152,9 @@ jobs:
   # coverage — runs all tests; no separate test job needed.
   # groundwork has no DB integration tests so no postgres/redis sidecars.
   # ==========================================================================
+      - if: ${{ always() && (failure() || cancelled()) }}
+        uses: ./.ci-workflows/.gitea/actions/upload-all-logs
+
   coverage:
     name: Test Coverage
     runs-on: brefwiz
@@ -180,6 +192,9 @@ jobs:
   # ==========================================================================
   # cargo-package — verify the crate packages cleanly before publish.
   # ==========================================================================
+      - if: ${{ always() && (failure() || cancelled()) }}
+        uses: ./.ci-workflows/.gitea/actions/upload-all-logs
+
   cargo-package:
     name: Cargo Package Validation
     runs-on: brefwiz
@@ -206,6 +221,9 @@ jobs:
   # ==========================================================================
   # auto-tag — push semver tag on green main; release.yml fires from the tag.
   # ==========================================================================
+      - if: ${{ always() && (failure() || cancelled()) }}
+        uses: ./.ci-workflows/.gitea/actions/upload-all-logs
+
   auto-tag:
     name: Auto-tag release
     needs: [format, clippy, audit, deny, coverage, cargo-package]
@@ -239,3 +257,6 @@ jobs:
         with:
           checkout: "false"
           gitea-token: ${{ secrets.PACKAGE_PUBLISHER_TOKEN }}
+      - if: ${{ always() && (failure() || cancelled()) }}
+        uses: ./.ci-workflows/.gitea/actions/upload-all-logs
+
