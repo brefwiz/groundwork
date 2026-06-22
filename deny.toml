@@ -10,6 +10,13 @@ ignore = [
     # the postgres feature so the mysql (and rsa) code paths are never compiled
     # or linked. No actionable fix until sqlx drops the mysql dep or patches rsa.
     "RUSTSEC-2023-0071",
+    # proc-macro-error2 unmaintained (RUSTSEC-2026-0173) — transitive via
+    # validator_derive (validator 0.20, the latest release). Unmaintained, not
+    # vulnerable; no upstream fix until validator migrates off proc-macro-error2,
+    # and socle uses validator::Validate directly so it cannot be dropped.
+    # Bridge during the platform sqlx-0.9 epic — remove when validator drops it.
+    # Tracks #90.
+    "RUSTSEC-2026-0173",
     # rand unsound aliased-mut-ref (RUSTSEC-2026-0097) pulled in transitively
     # by sqlx-postgres 0.8.x. Fix requires rand >= 0.9.3 which sqlx 0.8.x has
     # not yet released. Conditions for UB are extremely narrow (custom logger +
