@@ -77,7 +77,7 @@ chrono = { version = "0.4", features = ["serde"] }
 
 api-bones = { version = "6", features = ["axum", "uuid"] }
 
-sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "migrate", "chrono"], optional = true }
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "migrate", "macros", "chrono"], optional = true }
 
 governor = { version = "0.10", default-features = false, features = ["std", "dashmap"], optional = true }
 

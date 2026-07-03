@@ -73,6 +73,14 @@ pub struct ServiceBootstrap {
     #[cfg(feature = "database")]
     pub(crate) migrator: Option<sqlx::migrate::Migrator>,
 
+    /// When set, run the BFF session-store schema migration
+    /// ([`crate::bff::session::SESSION_MIGRATOR`]) after the consumer's own
+    /// migrator, against the same pool. Opt-in: a consumer may use the BFF
+    /// envelope crypto without the Postgres session store, so this never runs
+    /// on the bare `bff` feature alone.
+    #[cfg(all(feature = "bff", feature = "database"))]
+    pub(crate) run_bff_migrations: bool,
+
     /// Extra tower layers applied to the router just before the cross-cutting
     /// tower-http stack. Applied in registration order (first registered = innermost).
     pub(crate) extra_layers: Vec<Box<dyn FnOnce(Router) -> Router + Send>>,
@@ -134,6 +142,8 @@ impl ServiceBootstrap {
             db_pool: None,
             #[cfg(feature = "database")]
             migrator: None,
+            #[cfg(all(feature = "bff", feature = "database"))]
+            run_bff_migrations: false,
             extra_layers: Vec::new(),
             #[cfg(feature = "ratelimit")]
             rate_limit: None,
@@ -374,6 +384,29 @@ impl ServiceBootstrap {
     #[cfg(feature = "database")]
     pub fn with_migrations(mut self, migrator: sqlx::migrate::Migrator) -> Self {
         self.migrator = Some(migrator);
+        self
+    }
+
+    /// Opt in to running the BFF session-store schema migration at startup.
+    ///
+    /// The `PostgresSessionStore` does not create its own table; it expects the
+    /// `bff_sessions` schema to already exist. Calling this runs
+    /// [`crate::bff::session::SESSION_MIGRATOR`] after the consumer's own
+    /// migrator (registered via [`with_migrations`]), against the same pool.
+    ///
+    /// This is opt-in on purpose: a consumer may use the BFF envelope crypto
+    /// without the Postgres session store, in which case the table is
+    /// unnecessary. Only call this when you actually use
+    /// [`crate::bff::session::PostgresSessionStore`].
+    ///
+    /// Requires a pool — call [`with_database`] or [`with_db_pool`] as well.
+    ///
+    /// [`with_migrations`]: ServiceBootstrap::with_migrations
+    /// [`with_database`]: ServiceBootstrap::with_database
+    /// [`with_db_pool`]: ServiceBootstrap::with_db_pool
+    #[cfg(all(feature = "bff", feature = "database"))]
+    pub fn with_bff_session_migrations(mut self) -> Self {
+        self.run_bff_migrations = true;
         self
     }
 
