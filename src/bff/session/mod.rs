@@ -58,6 +58,15 @@ const SESSION_MIGRATIONS_TABLE: &str = "_sqlx_bff_session_migrations";
 /// history table (see [`SESSION_MIGRATIONS_TABLE`]) so it composes cleanly with
 /// a consumer's own migrator on the same pool.
 ///
+/// # Examples
+///
+/// ```no_run
+/// # async fn run(pool: &sqlx::PgPool) -> Result<(), sqlx::migrate::MigrateError> {
+/// socle::bff::session::run_session_migrations(pool).await?;
+/// # Ok(())
+/// # }
+/// ```
+///
 /// # Errors
 ///
 /// Returns the underlying `sqlx` migration error if applying the schema fails.

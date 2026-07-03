@@ -1,6 +1,6 @@
 [package]
 name = "socle"
-version = "4.1.0"
+version = "4.2.0"
 edition = "2024"
 authors = ["Gregoire Salingue"]
 description = "Opinionated axum service bootstrap: telemetry, database, rate limiting, and shutdown in one builder"
@@ -178,6 +178,11 @@ required-features = ["bff", "test-crypto"]
 [[test]]
 name = "postgres_session_store"
 path = "tests/postgres_session_store.rs"
+required-features = ["bff", "testing-postgres"]
+
+[[test]]
+name = "bff_session_migrator"
+path = "tests/bff_session_migrator.rs"
 required-features = ["bff", "testing-postgres"]
 
 [lints.rust]
