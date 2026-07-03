@@ -46,6 +46,10 @@ validation = ["dep:validator"]
 
 cursor = ["api-bones/base64"]
 
+bff = ["dep:async-trait", "dep:aes-gcm", "dep:hkdf", "dep:sha2", "dep:zeroize"]
+
+test-crypto = []
+
 testing = ["dep:reqwest"]
 http-client = ["dep:reqwest", "dep:reqwest-middleware", "dep:opentelemetry", "dep:async-trait", "dep:http"]
 metrics = ["dep:opentelemetry", "dep:opentelemetry_sdk", "dep:opentelemetry-prometheus", "dep:prometheus"]
@@ -81,6 +85,10 @@ reqwest = { version = "0.13", default-features = false, features = ["json", "rus
 reqwest-middleware = { version = "0.5", optional = true }
 opentelemetry = { version = "0.32", optional = true }
 async-trait = { version = "0.1", optional = true }
+aes-gcm = { version = "0.10", optional = true }
+hkdf = { version = "0.12", optional = true }
+sha2 = { version = "0.10", optional = true }
+zeroize = { version = "1", optional = true, features = ["derive"] }
 http = { version = "1", optional = true }
 opentelemetry_sdk = { version = "0.32", default-features = false, features = ["metrics"], optional = true }
 opentelemetry-prometheus = { version = "0.32", optional = true }
@@ -103,6 +111,7 @@ bytes = "1"
 tempfile = "3"
 sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres"] }
 opentelemetry_sdk = { version = "0.32", features = ["trace"] }
+rand = "0.8"
 
 [[example]]
 name = "minimal"
@@ -145,6 +154,11 @@ required-features = ["test-util"]
 name = "audit_sinks"
 path = "tests/audit_sinks.rs"
 required-features = ["test-util"]
+
+[[test]]
+name = "envelope_crypto_roundtrip"
+path = "tests/envelope_crypto_roundtrip.rs"
+required-features = ["bff", "test-crypto"]
 
 [lints.rust]
 warnings    = "deny"
