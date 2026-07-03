@@ -46,6 +46,8 @@ validation = ["dep:validator"]
 
 cursor = ["api-bones/base64"]
 
+bff = ["dep:async-trait"]
+
 testing = ["dep:reqwest"]
 http-client = ["dep:reqwest", "dep:reqwest-middleware", "dep:opentelemetry", "dep:async-trait", "dep:http"]
 metrics = ["dep:opentelemetry", "dep:opentelemetry_sdk", "dep:opentelemetry-prometheus", "dep:prometheus"]
