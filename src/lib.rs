@@ -55,6 +55,9 @@ pub mod http_client;
 #[cfg(feature = "metrics")]
 pub mod metrics;
 
+#[cfg(feature = "bff")]
+pub mod bff;
+
 // ── Public surface ────────────────────────────────────────────────────────────
 
 pub use audit::{

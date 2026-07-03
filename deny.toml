@@ -44,7 +44,12 @@ exceptions = []
 [bans]
 multiple-versions = "warn"
 wildcards = "allow"
-deny = []
+deny = [
+    { name = "quorumauth" },
+    { name = "sealwiz" },
+    { name = "service-kit" },
+    { name = "sqlx-switchboard" },
+]
 
 [sources]
 unknown-registry = "deny"
