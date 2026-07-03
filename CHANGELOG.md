@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.1.0] — 2026-07-03
+
+### Added
+
+- **`bff` feature — browser-BFF session TCB.** Transport-free port traits (`SessionStore`, `EnvelopeCrypto`, `KekSource`) with no KMS or product-specific dependency; `AeadEnvelopeCrypto`, the single AES-256-GCM envelope-crypto body over an injected `KekSource`; `PostgresSessionStore`, a plain-`sqlx` server-side session store that is zero-knowledge of plaintext; and `EnvKekSource`, the operator-managed KEK source (`from_bytes` / `from_hex` / `from_env`) that is the sole tier seam between community and KMS-backed builds. A test-only in-process KEK source sits behind the `test-crypto` feature. New `examples/bff_session.rs` demonstrates the seal → open round-trip.
+
 ## [4.0.0] — 2026-06-22
 
 ### Changed
