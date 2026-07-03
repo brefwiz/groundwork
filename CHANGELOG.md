@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.2.1] — 2026-07-03
+
+### Fixed
+
+- Release plumbing: 4.2.0's tag was cut but never published — the committed `Cargo.lock` still carried the pre-bump `socle` version, so `cargo publish` aborted on a dirty working tree. 4.2.1 re-releases the 4.2.0 changes with an aligned lockfile. No source changes.
+
 ## [4.2.0] — 2026-07-03
 
 ### Added
