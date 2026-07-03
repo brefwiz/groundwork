@@ -46,6 +46,15 @@ validation = ["dep:validator"]
 
 cursor = ["api-bones/base64"]
 
+# Backend-for-Frontend session layer: opaque session store, envelope crypto,
+# and the operator-managed KEK source. Pulls only permissive, crates.io deps.
+bff = ["dep:async-trait", "dep:sqlx", "dep:aes-gcm", "dep:hkdf", "dep:sha2", "dep:zeroize"]
+
+# Exposes the in-process test KEK source in non-test builds so integration
+# tests (and downstream harnesses) can exercise the envelope crypto without a
+# KMS. Never enable in production — it is a test double, not a key custodian.
+test-crypto = []
+
 testing = ["dep:reqwest"]
 http-client = ["dep:reqwest", "dep:reqwest-middleware", "dep:opentelemetry", "dep:async-trait", "dep:http"]
 metrics = ["dep:opentelemetry", "dep:opentelemetry_sdk", "dep:opentelemetry-prometheus", "dep:prometheus"]
@@ -68,7 +77,7 @@ chrono = { version = "0.4", features = ["serde"] }
 
 api-bones = { version = "6", features = ["axum", "uuid"] }
 
-sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "migrate"], optional = true }
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "migrate", "chrono"], optional = true }
 
 governor = { version = "0.10", default-features = false, features = ["std", "dashmap"], optional = true }
 
@@ -81,6 +90,10 @@ reqwest = { version = "0.13", default-features = false, features = ["json", "rus
 reqwest-middleware = { version = "0.5", optional = true }
 opentelemetry = { version = "0.32", optional = true }
 async-trait = { version = "0.1", optional = true }
+aes-gcm = { version = "0.10", optional = true }
+hkdf = { version = "0.12", optional = true }
+sha2 = { version = "0.10", optional = true }
+zeroize = { version = "1", optional = true, features = ["derive"] }
 http = { version = "1", optional = true }
 opentelemetry_sdk = { version = "0.32", default-features = false, features = ["metrics"], optional = true }
 opentelemetry-prometheus = { version = "0.32", optional = true }
@@ -101,8 +114,9 @@ serde_json = "1"
 http-body-util = "0.1"
 bytes = "1"
 tempfile = "3"
-sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres"] }
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "chrono"] }
 opentelemetry_sdk = { version = "0.32", features = ["trace"] }
+rand = "0.8"
 
 [[example]]
 name = "minimal"
@@ -145,6 +159,21 @@ required-features = ["test-util"]
 name = "audit_sinks"
 path = "tests/audit_sinks.rs"
 required-features = ["test-util"]
+
+[[test]]
+name = "session_ports_no_transport_dep"
+path = "tests/session_ports_no_transport_dep.rs"
+required-features = ["bff"]
+
+[[test]]
+name = "envelope_crypto_roundtrip"
+path = "tests/envelope_crypto_roundtrip.rs"
+required-features = ["bff", "test-crypto"]
+
+[[test]]
+name = "postgres_session_store"
+path = "tests/postgres_session_store.rs"
+required-features = ["bff", "testing-postgres"]
 
 [lints.rust]
 warnings    = "deny"
