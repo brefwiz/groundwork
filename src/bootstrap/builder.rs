@@ -404,6 +404,18 @@ impl ServiceBootstrap {
     /// [`with_migrations`]: ServiceBootstrap::with_migrations
     /// [`with_database`]: ServiceBootstrap::with_database
     /// [`with_db_pool`]: ServiceBootstrap::with_db_pool
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use socle::ServiceBootstrap;
+    ///
+    /// # fn build(pool: sqlx::PgPool) {
+    /// let _boot = ServiceBootstrap::new("my-service")
+    ///     .with_db_pool(pool)
+    ///     .with_bff_session_migrations();
+    /// # }
+    /// ```
     #[cfg(all(feature = "bff", feature = "database"))]
     pub fn with_bff_session_migrations(mut self) -> Self {
         self.run_bff_migrations = true;

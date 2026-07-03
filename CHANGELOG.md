@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.2.0] — 2026-07-03
+
+### Added
+
+- **`bff` session migration runner.** `SESSION_MIGRATOR` + `run_session_migrations(pool)` expose the `bff_sessions` schema, and the bootstrap opt-in `ServiceBootstrap::with_bff_session_migrations()` (features `bff` + `database`) runs it after the consumer's own migrator. It uses a dedicated `_sqlx_bff_session_migrations` history table so it composes cleanly with a consumer's migrator on the same pool — no shared-table `VersionMissing` hazard. A consumer using `PostgresSessionStore` now auto-provisions the session table at bootstrap instead of hand-wiring the DDL.
+
 ## [4.1.0] — 2026-07-03
 
 ### Added
