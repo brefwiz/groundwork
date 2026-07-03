@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use thiserror::Error;
 
 /// Opaque key used to address a stored session record.
@@ -48,7 +49,12 @@ pub trait SessionStore: Send + Sync + 'static {
     ///
     /// Returns [`SessionStoreError::Backend`] if the underlying storage
     /// fails, or other variants for specific failure modes.
-    async fn put(&self, key: &SessionKey, value: Vec<u8>) -> Result<(), SessionStoreError>;
+    async fn put(
+        &self,
+        key: &SessionKey,
+        value: Vec<u8>,
+        expires_at: DateTime<Utc>,
+    ) -> Result<(), SessionStoreError>;
 
     /// Fetch the record stored under `key`, if any.
     ///
@@ -64,6 +70,14 @@ pub trait SessionStore: Send + Sync + 'static {
     ///
     /// Returns [`SessionStoreError::Backend`] if the underlying storage fails.
     async fn delete(&self, key: &SessionKey) -> Result<(), SessionStoreError>;
+
+    /// Atomically fetch and delete the record stored under `key`, in one operation.
+    /// Expired records are treated as absent (`Ok(None)`), never returned.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SessionStoreError::Backend`] if the underlying storage fails.
+    async fn consume(&self, key: &SessionKey) -> Result<Option<Vec<u8>>, SessionStoreError>;
 }
 
 /// Envelope-encryption body for session payloads.
@@ -139,7 +153,12 @@ mod tests {
 
     #[async_trait]
     impl SessionStore for DummySessionStore {
-        async fn put(&self, key: &SessionKey, value: Vec<u8>) -> Result<(), SessionStoreError> {
+        async fn put(
+            &self,
+            key: &SessionKey,
+            value: Vec<u8>,
+            _expires_at: DateTime<Utc>,
+        ) -> Result<(), SessionStoreError> {
             self.storage.lock().unwrap().insert(key.clone(), value);
             Ok(())
         }
@@ -151,6 +170,10 @@ mod tests {
         async fn delete(&self, key: &SessionKey) -> Result<(), SessionStoreError> {
             self.storage.lock().unwrap().remove(key);
             Ok(())
+        }
+
+        async fn consume(&self, key: &SessionKey) -> Result<Option<Vec<u8>>, SessionStoreError> {
+            Ok(self.storage.lock().unwrap().remove(key))
         }
     }
 
@@ -208,9 +231,10 @@ mod tests {
 
         let key = "test-key".to_string();
         let value = b"test-value".to_vec();
+        let expires_at = Utc::now() + chrono::Duration::hours(1);
 
         // Put
-        store.put(&key, value.clone()).await.unwrap();
+        store.put(&key, value.clone(), expires_at).await.unwrap();
 
         // Get
         let retrieved = store.get(&key).await.unwrap();
