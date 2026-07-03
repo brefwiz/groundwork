@@ -86,6 +86,8 @@ impl ServiceBootstrap {
         let db_pool = self.db_pool;
         #[cfg(feature = "database")]
         let migrator = self.migrator;
+        #[cfg(all(feature = "bff", feature = "database"))]
+        let run_bff_migrations = self.run_bff_migrations;
 
         #[cfg(feature = "ratelimit")]
         let rate_limit = self.rate_limit;
@@ -176,6 +178,27 @@ impl ServiceBootstrap {
         } else {
             None
         };
+
+        // 2b. BFF session-store schema — opt-in, runs after the consumer's own
+        // migrator on the same pool. Uses a dedicated migrations-history table
+        // so it never collides with the consumer's `_sqlx_migrations` rows.
+        #[cfg(all(feature = "bff", feature = "database"))]
+        if run_bff_migrations {
+            if let Some(ref pool) = db {
+                tracing::warn!(
+                    service = %service_name,
+                    "socle: running BFF session-store migrations in-process"
+                );
+                crate::bff::session::run_session_migrations(pool)
+                    .await
+                    .map_err(|e| Error::Database(format!("bff session migrate: {e}")))?;
+                tracing::info!("socle: BFF session-store migrations applied successfully");
+            } else {
+                return Err(Error::Config(
+                    "with_bff_session_migrations(...) requires with_database(...) or with_db_pool(...) to be called first".into(),
+                ));
+            }
+        }
 
         // 3. Build the user router via ctx.
         let ctx = BootstrapCtx {
