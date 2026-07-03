@@ -3180,7 +3180,7 @@ dependencies = [
 
 [[package]]
 name = "socle"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "aes-gcm",
  "api-bones",

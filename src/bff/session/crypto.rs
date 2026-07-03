@@ -7,7 +7,12 @@ use hkdf::Hkdf;
 use sha2::Sha256;
 use zeroize::Zeroize;
 
-use super::ports::{EnvelopeCrypto, EnvelopeCryptoError, KekError, KekSource};
+use super::ports::{EnvelopeCrypto, EnvelopeCryptoError, KekSource};
+// KekError is only used by the test-only in-process KekSource below; importing it
+// unconditionally is an unused import under `--features bff` alone (CI's --all-features
+// masks it).
+#[cfg(any(test, feature = "test-crypto"))]
+use super::ports::KekError;
 
 /// AEAD envelope-encryption implementation using `AES-256-GCM`.
 ///
