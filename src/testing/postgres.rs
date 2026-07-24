@@ -60,13 +60,38 @@ impl EphemeralPostgres {
 
     /// Open a `sqlx` connection pool to this container.
     ///
+    /// testcontainers reports the container ready from its startup log line, but
+    /// on a CPU/Docker-loaded CI host the mapped port can take longer than
+    /// `sqlx`'s default 30s acquire-timeout to begin accepting TCP connections —
+    /// a single `connect` then fails with `PoolTimedOut` even though the
+    /// container is healthy. Retry the connect with linear backoff so a
+    /// slow-to-accept container is waited out; a genuinely dead container still
+    /// panics after the attempts are exhausted.
+    ///
     /// # Panics
     ///
-    /// Panics if the connection cannot be established.
+    /// Panics if the connection cannot be established after several attempts.
     pub async fn pool(&self) -> PgPool {
-        PgPool::connect(&self.connection_url)
-            .await
-            .expect("failed to connect to ephemeral Postgres")
+        use std::time::Duration;
+
+        let mut last_err = None;
+        for attempt in 1..=6u32 {
+            match sqlx::postgres::PgPoolOptions::new()
+                .acquire_timeout(Duration::from_secs(30))
+                .connect(&self.connection_url)
+                .await
+            {
+                Ok(pool) => return pool,
+                Err(err) => {
+                    last_err = Some(err);
+                    tokio::time::sleep(Duration::from_millis(u64::from(attempt) * 500)).await;
+                }
+            }
+        }
+        panic!(
+            "failed to connect to ephemeral Postgres after 6 attempts: {}",
+            last_err.expect("the retry loop always executes at least once"),
+        );
     }
 }
 
