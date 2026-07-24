@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.2.2] — 2026-07-23
+
+### Fixed
+
+- `testing::EphemeralPostgres::pool()` now retries the connection with linear backoff instead of a single `PgPool::connect`. On a CPU/Docker-loaded CI host the container's mapped port can take longer than sqlx's default 30s acquire-timeout to begin accepting TCP connections, causing a non-deterministic `PoolTimedOut` panic even though the container is healthy; the retry waits a slow-to-accept container out. A genuinely dead container still panics after the attempts are exhausted.
+
 ## [4.2.1] — 2026-07-03
 
 ### Fixed
