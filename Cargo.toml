@@ -92,7 +92,7 @@ opentelemetry = { version = "0.32", optional = true }
 async-trait = { version = "0.1", optional = true }
 aes-gcm = { version = "0.10", optional = true }
 hkdf = { version = "0.12", optional = true }
-sha2 = { version = "0.10", optional = true }
+sha2 = { version = "0.11", optional = true }
 zeroize = { version = "1", optional = true, features = ["derive"] }
 http = { version = "1", optional = true }
 opentelemetry_sdk = { version = "0.32", default-features = false, features = ["metrics"], optional = true }
