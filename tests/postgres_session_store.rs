@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, SubsecRound, Utc};
 use socle::bff::session::{PostgresSessionStore, SessionKey, SessionRenewal, SessionStore};
 use sqlx::{PgPool, Row};
 use testcontainers::runners::AsyncRunner;
@@ -151,6 +151,14 @@ async fn expire_treats_past_expiry_as_absent() {
     assert_eq!(consumed, None);
 }
 
+/// `timestamptz` keeps microseconds, so a deadline that round-trips through
+/// Postgres comes back with its nanosecond tail truncated. Every deadline these
+/// tests compare against is anchored here, so an equality assertion measures the
+/// renewal logic rather than the column's resolution.
+fn now() -> DateTime<Utc> {
+    Utc::now().trunc_subsecs(6)
+}
+
 fn renewed_at(outcome: SessionRenewal) -> DateTime<Utc> {
     match outcome {
         SessionRenewal::Renewed(at) => at,
@@ -164,19 +172,19 @@ async fn touch_beyond_threshold_extends_deadline() {
     let store = PostgresSessionStore::new(db.pool().clone());
 
     let key: SessionKey = "touch-extends".to_string();
-    let stored_deadline = Utc::now() + Duration::minutes(10);
+    let stored_deadline = now() + Duration::minutes(10);
     store
         .put(&key, b"payload".to_vec(), stored_deadline)
         .await
         .expect("put session");
 
-    let proposed = Utc::now() + Duration::minutes(30);
+    let proposed = now() + Duration::minutes(30);
     let outcome = store
         .touch_if_stale(
             &key,
             proposed,
             Duration::minutes(1),
-            Utc::now() + Duration::hours(24),
+            now() + Duration::hours(24),
         )
         .await
         .expect("touch session");
@@ -194,7 +202,7 @@ async fn touch_within_threshold_leaves_deadline_untouched() {
     let store = PostgresSessionStore::new(db.pool().clone());
 
     let key: SessionKey = "touch-below-threshold".to_string();
-    let stored_deadline = Utc::now() + Duration::minutes(10);
+    let stored_deadline = now() + Duration::minutes(10);
     store
         .put(&key, b"payload".to_vec(), stored_deadline)
         .await
@@ -206,7 +214,7 @@ async fn touch_within_threshold_leaves_deadline_untouched() {
             &key,
             stored_deadline + Duration::seconds(10),
             Duration::minutes(5),
-            Utc::now() + Duration::hours(24),
+            now() + Duration::hours(24),
         )
         .await
         .expect("touch session");
@@ -231,9 +239,9 @@ async fn touch_absent_key_reports_not_renewed() {
     let outcome = store
         .touch_if_stale(
             &"never-existed".to_string(),
-            Utc::now() + Duration::minutes(30),
+            now() + Duration::minutes(30),
             Duration::minutes(1),
-            Utc::now() + Duration::hours(24),
+            now() + Duration::hours(24),
         )
         .await
         .expect("touch absent key");
@@ -247,7 +255,7 @@ async fn touch_never_resurrects_a_lapsed_record() {
     let store = PostgresSessionStore::new(db.pool().clone());
 
     let key: SessionKey = "touch-lapsed".to_string();
-    let lapsed_deadline = Utc::now() - Duration::hours(1);
+    let lapsed_deadline = now() - Duration::hours(1);
     store
         .put(&key, b"payload".to_vec(), lapsed_deadline)
         .await
@@ -256,9 +264,9 @@ async fn touch_never_resurrects_a_lapsed_record() {
     let outcome = store
         .touch_if_stale(
             &key,
-            Utc::now() + Duration::minutes(30),
+            now() + Duration::minutes(30),
             Duration::minutes(1),
-            Utc::now() + Duration::hours(24),
+            now() + Duration::hours(24),
         )
         .await
         .expect("touch lapsed session");
@@ -283,15 +291,11 @@ async fn touch_clamps_to_the_absolute_cap() {
 
     let key: SessionKey = "touch-clamped".to_string();
     store
-        .put(
-            &key,
-            b"payload".to_vec(),
-            Utc::now() + Duration::minutes(10),
-        )
+        .put(&key, b"payload".to_vec(), now() + Duration::minutes(10))
         .await
         .expect("put session");
 
-    let cap = Utc::now() + Duration::hours(2);
+    let cap = now() + Duration::hours(2);
     let outcome = store
         .touch_if_stale(&key, cap + Duration::hours(48), Duration::minutes(1), cap)
         .await
@@ -315,16 +319,12 @@ async fn concurrent_touches_leave_a_coherent_deadline() {
 
     let key: SessionKey = "touch-concurrent".to_string();
     store
-        .put(
-            &key,
-            b"payload".to_vec(),
-            Utc::now() + Duration::minutes(10),
-        )
+        .put(&key, b"payload".to_vec(), now() + Duration::minutes(10))
         .await
         .expect("put session");
 
-    let cap = Utc::now() + Duration::hours(24);
-    let proposed = Utc::now() + Duration::minutes(30);
+    let cap = now() + Duration::hours(24);
+    let proposed = now() + Duration::minutes(30);
 
     let left = {
         let (store, key) = (store.clone(), key.clone());
@@ -368,7 +368,7 @@ async fn touch_never_disturbs_payload_or_creation_time() {
     let key: SessionKey = "touch-preserves".to_string();
     let payload = b"sealed-ciphertext".to_vec();
     store
-        .put(&key, payload.clone(), Utc::now() + Duration::minutes(10))
+        .put(&key, payload.clone(), now() + Duration::minutes(10))
         .await
         .expect("put session");
 
@@ -382,9 +382,9 @@ async fn touch_never_disturbs_payload_or_creation_time() {
     store
         .touch_if_stale(
             &key,
-            Utc::now() + Duration::minutes(30),
+            now() + Duration::minutes(30),
             Duration::minutes(1),
-            Utc::now() + Duration::hours(24),
+            now() + Duration::hours(24),
         )
         .await
         .expect("touch session");
