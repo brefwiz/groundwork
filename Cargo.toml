@@ -116,7 +116,7 @@ bytes = "1"
 tempfile = "3"
 sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "chrono"] }
 opentelemetry_sdk = { version = "0.32", features = ["trace"] }
-rand = "0.8"
+rand = "0.10"
 
 [[example]]
 name = "minimal"

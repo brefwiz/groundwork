@@ -3188,7 +3188,7 @@ dependencies = [
  "opentelemetry-prometheus",
  "opentelemetry_sdk",
  "prometheus",
- "rand 0.8.7",
+ "rand 0.10.2",
  "reqwest",
  "reqwest-middleware",
  "serde",
