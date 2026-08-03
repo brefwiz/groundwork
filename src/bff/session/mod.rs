@@ -17,8 +17,8 @@ pub mod ports;
 pub mod postgres_store;
 
 pub use ports::{
-    EnvelopeCrypto, EnvelopeCryptoError, KekError, KekSource, SessionKey, SessionStore,
-    SessionStoreError,
+    EnvelopeCrypto, EnvelopeCryptoError, KekError, KekSource, SessionKey, SessionRenewal,
+    SessionStore, SessionStoreError,
 };
 
 pub use crypto::AeadEnvelopeCrypto;
