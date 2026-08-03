@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-use chrono::{Duration, Utc};
-use socle::bff::session::{PostgresSessionStore, SessionKey, SessionStore};
-use sqlx::PgPool;
+use chrono::{DateTime, Duration, Utc};
+use socle::bff::session::{PostgresSessionStore, SessionKey, SessionRenewal, SessionStore};
+use sqlx::{PgPool, Row};
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres;
 
@@ -149,4 +149,252 @@ async fn expire_treats_past_expiry_as_absent() {
     let consumed = store.consume(&key).await.expect("consume expired session");
 
     assert_eq!(consumed, None);
+}
+
+fn renewed_at(outcome: SessionRenewal) -> DateTime<Utc> {
+    match outcome {
+        SessionRenewal::Renewed(at) => at,
+        SessionRenewal::NotRenewed => panic!("expected the record to be renewed"),
+    }
+}
+
+#[tokio::test]
+async fn touch_beyond_threshold_extends_deadline() {
+    let db = TestDb::new().await;
+    let store = PostgresSessionStore::new(db.pool().clone());
+
+    let key: SessionKey = "touch-extends".to_string();
+    let stored_deadline = Utc::now() + Duration::minutes(10);
+    store
+        .put(&key, b"payload".to_vec(), stored_deadline)
+        .await
+        .expect("put session");
+
+    let proposed = Utc::now() + Duration::minutes(30);
+    let outcome = store
+        .touch_if_stale(
+            &key,
+            proposed,
+            Duration::minutes(1),
+            Utc::now() + Duration::hours(24),
+        )
+        .await
+        .expect("touch session");
+
+    let renewed = renewed_at(outcome);
+    assert!(
+        renewed > stored_deadline,
+        "renewal must move the deadline forward: {renewed} <= {stored_deadline}"
+    );
+}
+
+#[tokio::test]
+async fn touch_within_threshold_leaves_deadline_untouched() {
+    let db = TestDb::new().await;
+    let store = PostgresSessionStore::new(db.pool().clone());
+
+    let key: SessionKey = "touch-below-threshold".to_string();
+    let stored_deadline = Utc::now() + Duration::minutes(10);
+    store
+        .put(&key, b"payload".to_vec(), stored_deadline)
+        .await
+        .expect("put session");
+
+    // Ten seconds beyond the stored deadline, against a five-minute threshold.
+    let outcome = store
+        .touch_if_stale(
+            &key,
+            stored_deadline + Duration::seconds(10),
+            Duration::minutes(5),
+            Utc::now() + Duration::hours(24),
+        )
+        .await
+        .expect("touch session");
+
+    assert_eq!(outcome, SessionRenewal::NotRenewed);
+
+    let actual: DateTime<Utc> =
+        sqlx::query(r"SELECT expires_at FROM bff_sessions WHERE session_id = $1")
+            .bind(&key)
+            .fetch_one(db.pool())
+            .await
+            .expect("read back deadline")
+            .get("expires_at");
+    assert_eq!(actual, stored_deadline);
+}
+
+#[tokio::test]
+async fn touch_absent_key_reports_not_renewed() {
+    let db = TestDb::new().await;
+    let store = PostgresSessionStore::new(db.pool().clone());
+
+    let outcome = store
+        .touch_if_stale(
+            &"never-existed".to_string(),
+            Utc::now() + Duration::minutes(30),
+            Duration::minutes(1),
+            Utc::now() + Duration::hours(24),
+        )
+        .await
+        .expect("touch absent key");
+
+    assert_eq!(outcome, SessionRenewal::NotRenewed);
+}
+
+#[tokio::test]
+async fn touch_never_resurrects_a_lapsed_record() {
+    let db = TestDb::new().await;
+    let store = PostgresSessionStore::new(db.pool().clone());
+
+    let key: SessionKey = "touch-lapsed".to_string();
+    let lapsed_deadline = Utc::now() - Duration::hours(1);
+    store
+        .put(&key, b"payload".to_vec(), lapsed_deadline)
+        .await
+        .expect("put lapsed session");
+
+    let outcome = store
+        .touch_if_stale(
+            &key,
+            Utc::now() + Duration::minutes(30),
+            Duration::minutes(1),
+            Utc::now() + Duration::hours(24),
+        )
+        .await
+        .expect("touch lapsed session");
+
+    assert_eq!(outcome, SessionRenewal::NotRenewed);
+    assert_eq!(store.get(&key).await.expect("get lapsed"), None);
+
+    let actual: DateTime<Utc> =
+        sqlx::query(r"SELECT expires_at FROM bff_sessions WHERE session_id = $1")
+            .bind(&key)
+            .fetch_one(db.pool())
+            .await
+            .expect("read back deadline")
+            .get("expires_at");
+    assert_eq!(actual, lapsed_deadline);
+}
+
+#[tokio::test]
+async fn touch_clamps_to_the_absolute_cap() {
+    let db = TestDb::new().await;
+    let store = PostgresSessionStore::new(db.pool().clone());
+
+    let key: SessionKey = "touch-clamped".to_string();
+    store
+        .put(
+            &key,
+            b"payload".to_vec(),
+            Utc::now() + Duration::minutes(10),
+        )
+        .await
+        .expect("put session");
+
+    let cap = Utc::now() + Duration::hours(2);
+    let outcome = store
+        .touch_if_stale(&key, cap + Duration::hours(48), Duration::minutes(1), cap)
+        .await
+        .expect("touch session");
+
+    assert_eq!(renewed_at(outcome), cap);
+
+    // At the cap, further renewal has nothing left to give and must stop
+    // writing rather than rewrite the same value on every request.
+    let second = store
+        .touch_if_stale(&key, cap + Duration::hours(48), Duration::minutes(1), cap)
+        .await
+        .expect("touch session at cap");
+    assert_eq!(second, SessionRenewal::NotRenewed);
+}
+
+#[tokio::test]
+async fn concurrent_touches_leave_a_coherent_deadline() {
+    let db = TestDb::new().await;
+    let store = std::sync::Arc::new(PostgresSessionStore::new(db.pool().clone()));
+
+    let key: SessionKey = "touch-concurrent".to_string();
+    store
+        .put(
+            &key,
+            b"payload".to_vec(),
+            Utc::now() + Duration::minutes(10),
+        )
+        .await
+        .expect("put session");
+
+    let cap = Utc::now() + Duration::hours(24);
+    let proposed = Utc::now() + Duration::minutes(30);
+
+    let left = {
+        let (store, key) = (store.clone(), key.clone());
+        tokio::spawn(async move {
+            store
+                .touch_if_stale(&key, proposed, Duration::minutes(1), cap)
+                .await
+        })
+    };
+    let right = {
+        let (store, key) = (store.clone(), key.clone());
+        tokio::spawn(async move {
+            store
+                .touch_if_stale(&key, proposed, Duration::minutes(1), cap)
+                .await
+        })
+    };
+
+    left.await.expect("join left").expect("left touch");
+    right.await.expect("join right").expect("right touch");
+
+    let actual: DateTime<Utc> =
+        sqlx::query(r"SELECT expires_at FROM bff_sessions WHERE session_id = $1")
+            .bind(&key)
+            .fetch_one(db.pool())
+            .await
+            .expect("read back deadline")
+            .get("expires_at");
+    assert_eq!(
+        actual, proposed,
+        "concurrent renewal must not tear the deadline"
+    );
+    assert!(actual <= cap, "concurrent renewal must respect the cap");
+}
+
+#[tokio::test]
+async fn touch_never_disturbs_payload_or_creation_time() {
+    let db = TestDb::new().await;
+    let store = PostgresSessionStore::new(db.pool().clone());
+
+    let key: SessionKey = "touch-preserves".to_string();
+    let payload = b"sealed-ciphertext".to_vec();
+    store
+        .put(&key, payload.clone(), Utc::now() + Duration::minutes(10))
+        .await
+        .expect("put session");
+
+    let before = sqlx::query(r"SELECT payload, created_at FROM bff_sessions WHERE session_id = $1")
+        .bind(&key)
+        .fetch_one(db.pool())
+        .await
+        .expect("read before");
+    let created_before: DateTime<Utc> = before.get("created_at");
+
+    store
+        .touch_if_stale(
+            &key,
+            Utc::now() + Duration::minutes(30),
+            Duration::minutes(1),
+            Utc::now() + Duration::hours(24),
+        )
+        .await
+        .expect("touch session");
+
+    let after = sqlx::query(r"SELECT payload, created_at FROM bff_sessions WHERE session_id = $1")
+        .bind(&key)
+        .fetch_one(db.pool())
+        .await
+        .expect("read after");
+
+    assert_eq!(after.get::<Vec<u8>, _>("payload"), payload);
+    assert_eq!(after.get::<DateTime<Utc>, _>("created_at"), created_before);
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use thiserror::Error;
 
 /// Opaque key used to address a stored session record.
@@ -34,6 +34,17 @@ pub enum EnvelopeCryptoError {
     Open(String),
     #[error(transparent)]
     Kek(#[from] KekError),
+}
+
+/// Outcome of a [`SessionStore::touch_if_stale`] renewal attempt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SessionRenewal {
+    /// The record's deadline was extended. Carries the deadline now stored,
+    /// which may be earlier than the one proposed if the cap clamped it.
+    Renewed(DateTime<Utc>),
+    /// The record was left untouched: absent, already past its deadline, or
+    /// the proposed extension did not clear the caller's threshold.
+    NotRenewed,
 }
 
 /// Server-side store for opaque, cookie-keyed BFF session records.
@@ -82,6 +93,40 @@ pub trait SessionStore: Send + Sync + 'static {
     ///
     /// Returns [`SessionStoreError::Backend`] if the underlying storage fails.
     async fn consume(&self, key: &SessionKey) -> Result<Option<Vec<u8>>, SessionStoreError>;
+
+    /// Extend the deadline of a live record, without touching its payload.
+    ///
+    /// This is the renewal primitive behind idle-based expiry: a caller that
+    /// treats the stored deadline as an inactivity deadline calls this on each
+    /// request to push it forward while the holder stays active.
+    ///
+    /// Renewal is refused — `NotRenewed`, not an error — when the record is
+    /// absent, when it is already past its stored deadline (a lapsed record is
+    /// never resurrected), or when `new_expires_at` would advance the stored
+    /// deadline by less than `min_delta`. That last condition is what keeps a
+    /// per-request call from becoming a per-request write: the number of
+    /// writes over any window is bounded by the window divided by `min_delta`,
+    /// whatever the request rate.
+    ///
+    /// The stored deadline never exceeds `absolute_cap`. A `new_expires_at`
+    /// beyond it is clamped, and the clamped value is what `min_delta` is
+    /// measured against — so a record already sitting at the cap stops
+    /// generating writes rather than rewriting the same value forever.
+    ///
+    /// Implementations must apply all three conditions and the clamp
+    /// atomically: concurrent callers on one key must not be able to observe
+    /// or produce a torn deadline.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SessionStoreError::Backend`] if the underlying storage fails.
+    async fn touch_if_stale(
+        &self,
+        key: &SessionKey,
+        new_expires_at: DateTime<Utc>,
+        min_delta: Duration,
+        absolute_cap: DateTime<Utc>,
+    ) -> Result<SessionRenewal, SessionStoreError>;
 }
 
 /// Envelope-encryption body for session payloads.
@@ -196,6 +241,20 @@ mod tests {
 
         async fn consume(&self, key: &SessionKey) -> Result<Option<Vec<u8>>, SessionStoreError> {
             Ok(self.storage.lock().unwrap().remove(key))
+        }
+
+        // This double keeps no deadline, so it has no renewal to perform.
+        // Reporting `NotRenewed` unconditionally is the only answer it can
+        // give honestly — anything else would let a renewal test pass here
+        // without a store that actually tracks deadlines.
+        async fn touch_if_stale(
+            &self,
+            _key: &SessionKey,
+            _new_expires_at: DateTime<Utc>,
+            _min_delta: Duration,
+            _absolute_cap: DateTime<Utc>,
+        ) -> Result<SessionRenewal, SessionStoreError> {
+            Ok(SessionRenewal::NotRenewed)
         }
     }
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.3.0] — 2026-08-03
+
+### Added
+
+- **`SessionStore::touch_if_stale` — the renewal primitive behind idle-based expiry.** A stored session record could previously only be created, read, deleted, or consumed: its deadline was fixed at creation and could never be extended, so no consumer could express "expire this session after a period of inactivity, but keep it alive while the holder is active". `touch_if_stale(key, new_expires_at, min_delta, absolute_cap)` extends a live record's deadline without touching its payload, and reports `SessionRenewal::Renewed(deadline)` or `SessionRenewal::NotRenewed`.
+
+  Renewal is refused — not an error — for an absent record, for one already past its deadline (a lapsed record is never resurrected), and when the extension would not clear `min_delta`. That threshold is what keeps a per-request call from becoming a per-request write: writes over any window are bounded by the window divided by `min_delta`, whatever the request rate. The stored deadline never exceeds `absolute_cap`, and the threshold is measured against the clamped value, so a record sitting at its cap stops generating writes instead of rewriting the same value forever.
+
+  `PostgresSessionStore` implements all of it in a single `UPDATE`. Comparing the stored deadline in Rust would open a lost-update window between concurrent requests on one key; the liveness check, the clamp, and the threshold all evaluate against the row the statement locks. No schema change — `bff_sessions` already carries both `expires_at` and `created_at`.
+
+### Changed
+
+- **Breaking for external `SessionStore` implementors.** `touch_if_stale` is declared on the port, not only on the Postgres implementation, so every backend is required to provide it. In-repo implementations are updated; an out-of-tree implementation must add the method.
+
 ## [4.2.2] — 2026-07-23
 
 ### Fixed
