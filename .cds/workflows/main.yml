@@ -36,6 +36,7 @@ jobs:
         uses: BREFWIZ/brefwiz/brefwiz/ci-workflows/canonical-check@main
         with:
           checkout: "false"
+          repository: ${{ cds.workflow_repository }}
           gitea-token: ${{ vars.brefwiz-secrets.FORGEJO_BOT_TOKEN }}
 
   lint:
