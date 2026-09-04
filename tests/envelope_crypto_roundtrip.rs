@@ -2,14 +2,14 @@
 
 #![cfg(all(feature = "bff", feature = "test-crypto"))]
 
-use rand::RngCore;
+use rand::Rng;
 use socle::bff::session::crypto::InProcessTestKekSource;
 use socle::bff::session::{AeadEnvelopeCrypto, EnvelopeCrypto};
 
 #[tokio::test]
 async fn envelope_crypto_roundtrip_seal_open() {
     let crypto = AeadEnvelopeCrypto;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut key = [0u8; 32];
     rng.fill_bytes(&mut key);
     let kek_source = InProcessTestKekSource::new(&key);
@@ -40,7 +40,7 @@ async fn envelope_crypto_roundtrip_seal_open() {
 #[tokio::test]
 async fn envelope_crypto_tampered_ciphertext_fails() {
     let crypto = AeadEnvelopeCrypto;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut key = [0u8; 32];
     rng.fill_bytes(&mut key);
     let kek_source = InProcessTestKekSource::new(&key);
@@ -75,7 +75,7 @@ async fn envelope_crypto_tampered_ciphertext_fails() {
 #[tokio::test]
 async fn envelope_crypto_multiple_subjects() {
     let crypto = AeadEnvelopeCrypto;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut key = [0u8; 32];
     rng.fill_bytes(&mut key);
     let kek_source = InProcessTestKekSource::new(&key);
@@ -116,7 +116,7 @@ async fn envelope_crypto_multiple_subjects() {
 #[tokio::test]
 async fn envelope_crypto_empty_plaintext() {
     let crypto = AeadEnvelopeCrypto;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut key = [0u8; 32];
     rng.fill_bytes(&mut key);
     let kek_source = InProcessTestKekSource::new(&key);
@@ -143,7 +143,7 @@ async fn envelope_crypto_empty_plaintext() {
 #[tokio::test]
 async fn envelope_crypto_large_plaintext() {
     let crypto = AeadEnvelopeCrypto;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut key = [0u8; 32];
     rng.fill_bytes(&mut key);
     let kek_source = InProcessTestKekSource::new(&key);

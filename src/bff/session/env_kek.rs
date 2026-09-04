@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-use aes_gcm::aead::{Aead, OsRng, rand_core::RngCore};
+use aes_gcm::aead::{Aead, Generate};
 use aes_gcm::{Aes256Gcm, Nonce, aead::KeyInit};
 use async_trait::async_trait;
 use zeroize::Zeroizing;
@@ -66,8 +66,8 @@ impl EnvKekSource {
 #[async_trait]
 impl KekSource for EnvKekSource {
     async fn wrap_dek(&self, _subject: &str, dek: &[u8]) -> Result<Vec<u8>, KekError> {
-        let mut nonce_bytes = [0u8; 12];
-        OsRng.fill_bytes(&mut nonce_bytes);
+        let nonce_bytes = <[u8; 12]>::try_generate()
+            .map_err(|e| KekError::Wrap(format!("system RNG unavailable: {e}")))?;
         let nonce = Nonce::from(nonce_bytes);
 
         let cipher = Aes256Gcm::new_from_slice(self.key.as_slice())
