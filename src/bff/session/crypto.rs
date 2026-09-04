@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-use aes_gcm::aead::{Aead, OsRng, Payload, rand_core::RngCore};
+use aes_gcm::aead::{Aead, Generate, Payload};
 use aes_gcm::{Aes256Gcm, Nonce, aead::KeyInit};
 use async_trait::async_trait;
 use hkdf::Hkdf;
@@ -33,8 +33,8 @@ impl EnvelopeCrypto for AeadEnvelopeCrypto {
         cookie_secret: &[u8],
     ) -> Result<Vec<u8>, EnvelopeCryptoError> {
         // Generate a random DEK (32 bytes = AES-256 key size).
-        let mut dek = [0u8; 32];
-        OsRng.fill_bytes(&mut dek);
+        let mut dek = <[u8; 32]>::try_generate()
+            .map_err(|e| EnvelopeCryptoError::Seal(format!("system RNG unavailable: {e}")))?;
 
         // KDF-mix the DEK with the cookie secret to derive the final encryption key.
         let mut final_dek = [0u8; 32];
@@ -43,8 +43,8 @@ impl EnvelopeCrypto for AeadEnvelopeCrypto {
             .map_err(|e| EnvelopeCryptoError::Seal(format!("KDF expansion failed: {e}")))?;
 
         // Generate a random nonce (12 bytes for GCM).
-        let mut nonce_bytes = [0u8; 12];
-        OsRng.fill_bytes(&mut nonce_bytes);
+        let nonce_bytes = <[u8; 12]>::try_generate()
+            .map_err(|e| EnvelopeCryptoError::Seal(format!("system RNG unavailable: {e}")))?;
         let nonce = Nonce::from(nonce_bytes);
 
         // AEAD-encrypt plaintext under the derived DEK, AAD-bound to subject.
@@ -176,8 +176,8 @@ impl InProcessTestKekSource {
 impl KekSource for InProcessTestKekSource {
     async fn wrap_dek(&self, _subject: &str, dek: &[u8]) -> Result<Vec<u8>, KekError> {
         // Generate a nonce for the wrap operation.
-        let mut nonce_bytes = [0u8; 12];
-        OsRng.fill_bytes(&mut nonce_bytes);
+        let nonce_bytes = <[u8; 12]>::try_generate()
+            .map_err(|e| KekError::Wrap(format!("system RNG unavailable: {e}")))?;
         let nonce = Nonce::from(nonce_bytes);
 
         // AEAD-encrypt the DEK under the test key.
