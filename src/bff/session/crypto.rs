@@ -8,6 +8,26 @@ use sha2::Sha256;
 use zeroize::Zeroize;
 
 use super::ports::{EnvelopeCrypto, EnvelopeCryptoError, KekSource};
+
+/// Derive the AES key actually used for the envelope, mixing the DEK with the
+/// cookie secret and binding it to the subject.
+///
+/// The derived key is a return value rather than a caller-supplied out-buffer.
+/// That is not only tidier: an out-buffer has to be declared as `[0u8; 32]`
+/// before the KDF fills it, and a reader — human or static analyser — following
+/// the zeroed literal into `Aes256Gcm::new_from_slice` sees a hard-coded key.
+/// Returning the result keeps the zeroed array from ever being a value the
+/// caller could mistake for key material.
+fn derive_envelope_key(
+    cookie_secret: &[u8],
+    ikm: &[u8],
+    subject: &str,
+) -> Result<[u8; 32], hkdf::InvalidLength> {
+    let mut derived = [0u8; 32];
+    Hkdf::<Sha256>::new(Some(cookie_secret), ikm).expand(subject.as_bytes(), &mut derived)?;
+    Ok(derived)
+}
+
 // KekError is only used by the test-only in-process KekSource below; importing it
 // unconditionally is an unused import under `--features bff` alone (CI's --all-features
 // masks it).
@@ -37,9 +57,7 @@ impl EnvelopeCrypto for AeadEnvelopeCrypto {
             .map_err(|e| EnvelopeCryptoError::Seal(format!("system RNG unavailable: {e}")))?;
 
         // KDF-mix the DEK with the cookie secret to derive the final encryption key.
-        let mut final_dek = [0u8; 32];
-        let hkdf = Hkdf::<Sha256>::new(Some(cookie_secret), &dek);
-        hkdf.expand(subject.as_bytes(), &mut final_dek)
+        let mut final_dek = derive_envelope_key(cookie_secret, &dek, subject)
             .map_err(|e| EnvelopeCryptoError::Seal(format!("KDF expansion failed: {e}")))?;
 
         // Generate a random nonce (12 bytes for GCM).
@@ -116,9 +134,7 @@ impl EnvelopeCrypto for AeadEnvelopeCrypto {
         let mut unwrapped_dek = kek_source.unwrap_dek(subject, wrapped_dek).await?;
 
         // KDF-mix the unwrapped DEK with the cookie secret to derive the final DEK.
-        let mut dek = [0u8; 32];
-        let hkdf = Hkdf::<Sha256>::new(Some(cookie_secret), &unwrapped_dek);
-        hkdf.expand(subject.as_bytes(), &mut dek)
+        let mut dek = derive_envelope_key(cookie_secret, &unwrapped_dek, subject)
             .map_err(|e| EnvelopeCryptoError::Open(format!("KDF expansion failed: {e}")))?;
 
         // Zero the unwrapped DEK.

@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.4.0] — 2026-09-03
+
+### Fixed
+
+- **The TLS backend is aws-lc-rs again, not ring.** `sqlx-core` gates its aws-lc-rs arm on `not(_tls-rustls-ring-webpki)` and its ring arm on `any(_tls-rustls-ring-webpki, _tls-rustls-ring-native-roots)`. Cargo unifies features across the whole graph, so naming `tls-rustls-ring` here did not express a local preference — it selected ring for every service built on socle, whatever backend that service had pinned for itself. Nothing failed to compile and no test failed, because the swap is only visible in the lockfile. The same held for `async-nats`, whose default feature set contains `ring` and turns on `tokio-rustls/ring`, `tokio-websockets/ring` and `rustls-webpki/ring`. Both now select aws-lc-rs; the async-nats default set is otherwise preserved verbatim.
+
+- **Two advisories in the dependency graph.** `serde_with` below 3.21.0 panicked on empty `KeyValueMap` sequence entries (GHSA-7gcf-g7xr-8hxj), and `time` below 0.3.47 was open to a stack-exhaustion denial of service (GHSA-r6v5-fh4h-64xc). Both are transitive and are resolved by the lockfile.
+
+### Changed
+
+- **Minimum supported Rust version is now 1.98** (was 1.85). This is what made the advisories above reachable: the patched `time`, `serde_with` and `async-nats` releases all require a newer compiler than 1.85, so the MSRV-aware resolver kept selecting vulnerable versions, and the declared MSRV would have become a false claim the moment it stopped. The toolchain file is pinned to 1.98.0 rather than floating on stable.
+
+- Dependency bumps absorbed in one resolution: `async-nats` 0.49 to 0.50, `tower-http` 0.6 to 0.7, `rand` 0.8 to 0.10, and the digest cluster `aes-gcm` 0.10 to 0.11, `hkdf` 0.12 to 0.13, `sha2` 0.10 to 0.11, which move together because they share the digest trait line. `futures-util`, `http-body-util`, `thiserror` and `async-trait` moved within their existing ranges.
+
+- **Envelope DEK and nonce generation now report RNG failure instead of aborting.** aes-gcm 0.11 retires `aead::OsRng`; randomness comes from the `Generate` trait over the system's ambient CSPRNG, which is fallible where the old API panicked internally. A failure now surfaces as `EnvelopeCryptoError::Seal` or `KekError::Wrap`. No change to the wire format or to the derived key material.
+
 ## [4.3.0] — 2026-08-03
 
 ### Added
