@@ -52,6 +52,11 @@ pub struct OrgContextExtractor(pub OrganizationContext);
 impl<S: Send + Sync> FromRequestParts<S> for OrgContextExtractor {
     type Rejection = HandlerError;
 
+    // `async` here is dictated by the trait, not chosen: axum declares
+    // `from_request_parts` as an async fn, so an impl cannot drop the keyword
+    // even when its body reads request parts synchronously and never awaits.
+    // The lint has no impl-side resolution short of changing axum.
+    #[allow(clippy::unused_async_trait_impl)]
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let auth_ctx = parts.extensions.get::<OrganizationContext>().cloned();
         let header_org_id = OrgId::try_from_headers(&parts.headers).ok();
