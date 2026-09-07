@@ -102,7 +102,7 @@ opentelemetry_sdk = { version = "0.32", default-features = false, features = ["m
 opentelemetry-prometheus = { version = "0.32", optional = true }
 prometheus = { version = "0.14", default-features = false, optional = true }
 
-validator = { version = "0.20", features = ["derive"], optional = true }
+validator = { version = "0.21", features = ["derive"], optional = true }
 
 testcontainers = { version = "0.27", optional = true }
 testcontainers-modules = { version = "0.15", features = ["postgres"], optional = true }
