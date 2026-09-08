@@ -75,7 +75,7 @@ serde_json = "1"
 figment = { version = "0.10", features = ["env", "toml"] }
 chrono = { version = "0.4", features = ["serde"] }
 
-api-bones = { version = "6", features = ["axum", "uuid"] }
+api-bones = { version = "6.13", registry = "brefwiz", features = ["axum", "uuid"] }
 
 # TLS backend: aws-lc-rs, not ring. sqlx-core gates its aws-lc-rs arm on
 # `not(_tls-rustls-ring-webpki)`, so naming ring here silently won for every

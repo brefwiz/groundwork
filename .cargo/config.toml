@@ -1,2 +1,12 @@
+# api-bones is published to the Brefwiz registry rather than crates.io, and
+# `registry = "brefwiz"` in a manifest is resolved through this index. Stated
+# here rather than left to whatever ambient config a machine happens to carry:
+# cargo keys a source by its index URL, so a config spelling it differently --
+# a different case in the path is enough -- resolves the same crate as a
+# second, incompatible package and writes that URL into Cargo.lock.
+[registries.brefwiz]
+index = "sparse+https://git.brefwiz.com/api/packages/brefwiz/cargo/"
+credential-provider = "cargo:token"
+
 [registry]
 global-credential-providers = ["cargo:token"]
